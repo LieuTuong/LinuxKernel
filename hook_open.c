@@ -1,7 +1,7 @@
 #include<linux/module.h>
 #include<linux/kernel.h>
 #include<linux/init.h>
-#include<linux/uinstd.h>      //sys_call_table  __NR_*
+#include<linux/unistd.h>      //sys_call_table  __NR_*
 #include<linux/fs.h>         // filp_open
 #include<linux/slab.h>	    //kmalloc
 #include<asm/paravirt.h>    // write_cr0
@@ -13,7 +13,7 @@
 
 unsigned long *sys_call_table = NULL;
 
-asmlinkage int (*original_open)(const char *pathName, int flags, int mode);
+asmlinkage int (*original_open)(const char *pathName, int flags);
 
 static int find_sys_call_table(char *kern_ver)
 {
@@ -21,7 +21,7 @@ static int find_sys_call_table(char *kern_ver)
  	int i = 0;
 	char *fileName;
 	size_t len_filename = strlen(kern_ver) + strlen(BOOT_PATH) +1;
-	struct file *f = NULL:
+	struct file *f = NULL;
 	mm_segment_t oldfs;
 	oldfs = get_fs();
 	set_fs (KERNEL_DS);
@@ -66,7 +66,7 @@ static int find_sys_call_table(char *kern_ver)
 				}
 				memset(sys_string, 0, VERSION_LEN);
 				strncpy(sys_string, strsep(&system_map_entry_ptr," "),VERSION_LEN);
-				kstroul(sys_string, 16, &sys_call_table);
+				kstrtoul(sys_string, 16, &sys_call_table);
 				printk(KERN_INFO "syscall_table retrieved\n");
 				kfree(sys_string);
 
@@ -122,7 +122,7 @@ char *acquire_kernel_version (char *buf) {
 }
 	
 
-asmlinkage int (*new_open)(const char *pathName, int flags, int mode)
+asmlinkage int (*new_open)(const char *pathName, int flags)
 {
 	printk(KERN_INFO "This is my hook_open()\n");
 	
@@ -159,7 +159,7 @@ static int __init init_hook(void) {
 static void __exit exit_hook(void) {
     if (sys_call_table != NULL) {
         write_cr0 (read_cr0 () & (~ 0x10000));
-        sys_call_table[__NR_open] = original_write;
+        sys_call_table[__NR_open] = original_open;
         write_cr0 (read_cr0 () | 0x10000);
         printk(KERN_EMERG "[+] onunload: sys_call_table unhooked\n");
     } else {
