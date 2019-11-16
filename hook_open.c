@@ -13,7 +13,7 @@
 
 unsigned long *sys_call_table = NULL;
 
-asmlinkage int (*original_open)(const char *pathName, int flags);
+asmlinkage int (*original_open)(const char *pathName, int flags, int mode);
 
 static int find_sys_call_table(char *kern_ver)
 {
@@ -122,13 +122,13 @@ char *acquire_kernel_version (char *buf) {
 }
 	
 
-asmlinkage int (*new_open)(const char *pathName, int flags)
+asmlinkage int (*new_open)(const char *pathName, int flags, int mode)
 {
 	printk(KERN_INFO "This is my hook_open()\n");
 	
-	printk(KERN_INFO"Opening file: %s\n",pathname);
+	printk(KERN_INFO"Opening file: %s\n",pathName);
 	
-	return original_open(pathname, flags);
+	return original_open(pathName, flags);
 }
 
 
@@ -157,9 +157,9 @@ static int __init init_hook(void) {
 }
 
 static void __exit exit_hook(void) {
-    if (syscall_table != NULL) {
+    if (sys_call_table != NULL) {
         write_cr0 (read_cr0 () & (~ 0x10000));
-        syscall_table[__NR_open] = original_write;
+        sys_call_table[__NR_open] = original_write;
         write_cr0 (read_cr0 () | 0x10000);
         printk(KERN_EMERG "[+] onunload: sys_call_table unhooked\n");
     } else {
