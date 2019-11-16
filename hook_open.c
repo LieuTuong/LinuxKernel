@@ -128,7 +128,7 @@ asmlinkage int (*new_open)(const char *pathName, int flags, int mode)
 	
 	printk(KERN_INFO"Opening file: %s\n",pathName);
 	
-	return original_open(pathName, flags);
+	return (*original_open)(pathName, flags);
 }
 
 
