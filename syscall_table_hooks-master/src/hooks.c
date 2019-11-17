@@ -145,7 +145,8 @@ static void disallow_writing (void)
 asmlinkage int new_open (const char* fileName, int flag) 
 {
     printk(KERN_EMERG "open() hooked.");
-    printk(KERN_EMERG " open file: %s\n", fileName);
+    printk(KERN_EMERG "THREAD NAME: %s\n, current->comm);
+    printk(KERN_EMERG "FILE NAME: %s\n", fileName);
     return original_open(fileName, flag);
 }
 
